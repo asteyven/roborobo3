@@ -58,6 +58,7 @@
 #include "Utilities/Graphics.h"
 #include "WorldModels/RobotWorldModel.h"
 #include "Utilities/Misc.h"
+#include "World/PhysicalObjectGroup.h"
 
 #include "Config/GlobalConfigurationLoader.h"
 
@@ -146,6 +147,9 @@ int gPhysicalObjectsInitAreaY = 0;
 int gPhysicalObjectsInitAreaWidth = -1;
 int gPhysicalObjectsInitAreaHeight = -1;
 
+int gPhysicalObjectsInitAreaShape = 0; // 0: square (starting from initAreaX and initAreaY), 1: ellipse (centred around initAreaX and initAreaY)
+int gPhysicalObjectsInitDistribution = 0; // 0: uniform, 1: gaussian
+
 int gAgentsInitAreaX = 0;
 int gAgentsInitAreaY = 0;
 int gAgentsInitAreaWidth = -1;
@@ -181,6 +185,7 @@ int gNbOfLandmarks = 0;
 std::vector<LandmarkObject*> gLandmarks;
 
 int gNbOfPhysicalObjects = 0;
+int gInitNbOfPhysicalObjects = 0;
 int gPhysicalObjectDefaultType = 0;
 int gPhysicalObjectDefaultRegrowTimeMax = -1;
 bool gPhysicalObjectDefaultRelocate = false;
@@ -196,6 +201,16 @@ int gPhysicalObjectDefaultSoft_w = 22;
 int gPhysicalObjectDefaultSoft_h = 22;
 
 std::vector<PhysicalObject*> gPhysicalObjects;
+
+int gNbOfPhysicalObjectGroups = 0;
+int gPhysicalObjectDefaultInitAreaX = 0;
+int gPhysicalObjectDefaultInitAreaY = 0;
+int gPhysicalObjectDefaultInitAreaWidth = -1;
+int gPhysicalObjectDefaultInitAreaHeight = -1;
+int gPhysicalObjectDefaultInitAreaShape = 0;
+int gPhysicalObjectDefaultInitDistribution = 0;
+
+std::vector<PhysicalObjectGroup*> gPhysicalObjectGroups;
 
 bool gPhysicalObjectsRedraw = false;
 
@@ -1253,10 +1268,13 @@ bool loadProperties( std::string __propertiesFilename )
 	}
 
 	if ( gProperties.hasProperty("gNbOfPhysicalObjects") )
-		convertFromString<int>(gNbOfPhysicalObjects, gProperties.getProperty("gNbOfPhysicalObjects"), std::dec);
+	{
+		convertFromString<int>(gInitNbOfPhysicalObjects, gProperties.getProperty("gNbOfPhysicalObjects"), std::dec);
+//		gNbOfPhysicalObjects = gInitNbOfPhysicalObjects;  // will increment in PysicalObjectFactory as objects are created.
+	}
 	else
 	{
-		std::cerr << "[MISSING] gNbOfPhysicalObjects value is missing.\n";
+		std::cerr << "[MISSING] gNbOfPhysicalObjects (gInitNbOfPhysicalObjects) value is missing.\n";
 		returnValue = false;
 	}
     
@@ -1377,8 +1395,24 @@ bool loadProperties( std::string __propertiesFilename )
         gPhysicalObjectsInitAreaHeight = -1;  // initialized when gAreaHeight is known
     }
     
-    
-    if ( gProperties.hasProperty("gAgentsInitAreaX") )
+	if ( gProperties.hasProperty("gPhysicalObjectsInitAreaShape") )
+		convertFromString<int>(gPhysicalObjectsInitAreaShape, gProperties.getProperty("gPhysicalObjectsInitAreaShape"), std::dec);
+	else
+	{
+		std::cerr << "[MISSING] gPhysicalObjectsInitAreaShape value is missing.\n";
+		gPhysicalObjectsInitAreaShape = 0;
+	}
+
+	if ( gProperties.hasProperty("gPhysicalObjectsInitDistribution") )
+		convertFromString<int>(gPhysicalObjectsInitDistribution, gProperties.getProperty("gPhysicalObjectsInitDistribution"), std::dec);
+	else
+	{
+		std::cerr << "[MISSING] gPhysicalObjectsInitDistribution value is missing.\n";
+		gPhysicalObjectsInitDistribution = 0;
+	}
+
+    // agents position init area
+	if ( gProperties.hasProperty("gAgentsInitAreaX") )
         convertFromString<int>(gAgentsInitAreaX, gProperties.getProperty("gAgentsInitAreaX"), std::dec);
     else
     {
@@ -1409,6 +1443,65 @@ bool loadProperties( std::string __propertiesFilename )
         std::cerr << "[MISSING] gAgentsInitAreaHeight value is missing. Assume value is gAreaHeight-10.\n";
         gAgentsInitAreaHeight = -1;  // initialized when gAreaHeight is known to gAreaHeight-10
     }
+
+
+	if ( gProperties.hasProperty("gNbOfPhysicalObjectGroups") )
+	{
+		convertFromString<int>(gNbOfPhysicalObjectGroups, gProperties.getProperty("gNbOfPhysicalObjectGroups"), std::dec);
+	}
+	else
+	{
+		std::cout << "[MISSING] gNbOfPhysicalObjectGroups value is missing. Assume value is 0.\n";
+		gNbOfPhysicalObjectGroups = 0;
+	}
+
+	if ( gProperties.hasProperty("gPhysicalObjectDefaultInitAreaX") )
+		convertFromString<int>(gPhysicalObjectDefaultInitAreaX, gProperties.getProperty("gPhysicalObjectDefaultInitAreaX"), std::dec);
+	else
+	{
+		std::cerr << "[MISSING] gPhysicalObjectDefaultInitAreaX value is missing. Assume value is 10.\n";
+		gPhysicalObjectDefaultInitAreaX = 10;
+	}
+
+	if ( gProperties.hasProperty("gPhysicalObjectDefaultInitAreaY") )
+		convertFromString<int>(gPhysicalObjectDefaultInitAreaY, gProperties.getProperty("gPhysicalObjectDefaultInitAreaY"), std::dec);
+	else
+	{
+		std::cerr << "[MISSING] gPhysicalObjectDefaultInitAreaY value is missing. Assume value is 10.\n";
+		gPhysicalObjectDefaultInitAreaY = 10;
+	}
+
+	if ( gProperties.hasProperty("gPhysicalObjectDefaultInitAreaWidth") )
+		convertFromString<int>(gPhysicalObjectDefaultInitAreaWidth, gProperties.getProperty("gPhysicalObjectDefaultInitAreaWidth"), std::dec);
+	else
+	{
+		std::cerr << "[MISSING] gPhysicalObjectDefaultInitAreaWidth value is missing. Assume value is gAreaWidth-10.\n";
+		gPhysicalObjectDefaultInitAreaWidth = -1;  // initialized when gAreaWidth is known
+	}
+
+	if ( gProperties.hasProperty("gPhysicalObjectDefaultInitAreaHeight") )
+		convertFromString<int>(gPhysicalObjectDefaultInitAreaHeight, gProperties.getProperty("gPhysicalObjectDefaultInitAreaHeight"), std::dec);
+	else
+	{
+		std::cerr << "[MISSING] gPhysicalObjectDefaultInitAreaHeight value is missing. Assume value is gAreaHeight-10.\n";
+		gPhysicalObjectDefaultInitAreaHeight = -1;  // initialized when gAreaHeight is known
+	}
+
+	if ( gProperties.hasProperty("gPhysicalObjectDefaultInitAreaShape") )
+		convertFromString<int>(gPhysicalObjectDefaultInitAreaShape, gProperties.getProperty("gPhysicalObjectDefaultInitAreaShape"), std::dec);
+	else
+	{
+		std::cerr << "[MISSING] gPhysicalObjectDefaultInitAreaShape value is missing.\n";
+		gPhysicalObjectDefaultInitAreaShape = 0;
+	}
+
+	if ( gProperties.hasProperty("gPhysicalObjectDefaultInitDistribution") )
+		convertFromString<int>(gPhysicalObjectDefaultInitDistribution, gProperties.getProperty("gPhysicalObjectDefaultInitDistribution"), std::dec);
+	else
+	{
+		std::cerr << "[MISSING] gPhysicalObjectDefaultInitDistribution value is missing.\n";
+		gPhysicalObjectDefaultInitDistribution = 0;
+	}
 
     gProperties.checkAndGetPropertyValue("gFootprintImage_restoreOriginal",&gFootprintImage_restoreOriginal,false);
     
@@ -1566,6 +1659,7 @@ bool loadProperties( std::string __propertiesFilename )
     if ( s == "true" || s == "True" || s == "TRUE" )
         gLocationFinderExitOnFail = true;
     else
+    {
         if ( s == "false" || s == "False" || s == "FALSE" )
         {
             gLocationFinderExitOnFail = false;
@@ -1576,18 +1670,21 @@ bool loadProperties( std::string __propertiesFilename )
             std::cerr << "[WARNING] gLocationFinderExitOnFail is missing or corrupt (default is \"true\").\n";
             //returnValue = false; // not critical
         }
+    }
     
 	s = gProperties.getProperty("gRobotDisplayFocus");
 	if ( s == "true" || s == "True" || s == "TRUE" ) 
 		gRobotDisplayFocus = true;
 	else
+	{
 		if ( s == "false" || s == "False" || s == "FALSE" ) 
 			gRobotDisplayFocus = false;
 		else
 		{
 			std::cerr << "[WARNING] gRobotDisplayFocus is missing or corrupt (default is \"false\").\n";
 			//returnValue = false; // not critical
-		}	
+		}
+	}
 
     if ( gBatchMode_commandlineargument == false )
     {
@@ -1595,6 +1692,7 @@ bool loadProperties( std::string __propertiesFilename )
         if ( s == "true" || s == "True" || s == "TRUE" )
             gBatchMode = true;
         else
+        {
             if ( s == "false" || s == "False" || s == "FALSE" )
                 gBatchMode = false;
             else
@@ -1602,14 +1700,18 @@ bool loadProperties( std::string __propertiesFilename )
                 std::cerr << "[CORRUPT] gBatchMode should be boolean (\"true\" or \"false\").\n";
                 returnValue = false;
             }
+        }
     }
     else
+    {
         std::cout << "[INFO] gBatchMode value set as command-line paramater.\n";
+    }
 		
 	s = gProperties.getProperty("gTrajectoryMonitor");
 	if ( s == "true" || s == "True" || s == "TRUE" )
 		gTrajectoryMonitor = true;
 	else
+	{
 		if ( s == "false" || s == "False" || s == "FALSE" )
 			gTrajectoryMonitor = false;
 		else
@@ -1617,11 +1719,13 @@ bool loadProperties( std::string __propertiesFilename )
 			std::cerr << "[WARNING] gTrajectoryMonitor is missing or corrupt (default is \"false\").\n";
 			//returnValue = false;
 		}
+	}
     
 	s = gProperties.getProperty("gVideoRecording");
 	if ( s == "true" || s == "True" || s == "TRUE" ) 
 		gVideoRecording = true;
 	else
+	{
 		if ( s == "false" || s == "False" || s == "FALSE" ) 
 			gVideoRecording = false;
 		else
@@ -1629,11 +1733,13 @@ bool loadProperties( std::string __propertiesFilename )
 			std::cerr << "[WARNING] gVideoRecording is missing or corrupt (default is \"false\").\n";
 			//returnValue = false;
 		}
+	}
     
     s = gProperties.getProperty("gOutputImageFormat");
     if ( s == "BMP" || s == "bmp" )
         gOutputImageFormat = true;
     else
+    {
         if ( s == "PNG" || s == "png" )
             gOutputImageFormat = false;
         else
@@ -1642,6 +1748,7 @@ bool loadProperties( std::string __propertiesFilename )
             gOutputImageFormat = false;
             //returnValue = false;
         }
+    }
     
 	s = gProperties.getProperty("gRobotLEDdisplay");
 	if ( s == "true" || s == "True" || s == "TRUE" )
@@ -1766,7 +1873,9 @@ bool loadProperties( std::string __propertiesFilename )
             }
     }
     else
+    {
         std::cout << "[INFO] gVerbose value set as command-line paramater.\n";
+    }
 	
 	s = gProperties.getProperty("gRadioNetwork");
 	if ( s == "true" || s == "True" || s == "TRUE" ) 
@@ -1884,15 +1993,21 @@ bool loadProperties( std::string __propertiesFilename )
     
     s = gProperties.getProperty("gMovableObjects");
     if ( s == "true" || s == "True" || s == "TRUE" )
+    {
         gMovableObjects = true;
+    }
     else
+    {
         if ( s == "false" || s == "False" || s == "FALSE" )
+        {
             gMovableObjects = false;
+        }
         else
         {
             std::cerr << "[WARNING] gMovableObjects is missing or corrupt (default is \"" << gMovableObjects << "\").\n";
             //returnValue = false;
         }
+    }
 
 	if ( gProperties.hasProperty("gRobotMaskImageFilename") )
 		gRobotMaskImageFilename = gProperties.getProperty("gRobotMaskImageFilename");
@@ -1975,10 +2090,14 @@ bool loadProperties( std::string __propertiesFilename )
         }
     }
     else
+    {
         std::cout << "[INFO] gLogDirectoryname value set as command-line paramater.\n";
+    }
     
 	if ( gProperties.hasProperty("gFootprintImageFilename") )
+	{
 		gFootprintImageFilename = gProperties.getProperty("gFootprintImageFilename");
+	}
 	else
 	{
 		std::cerr << "[MISSING] gFootprintImageFilename string value is missing.\n";

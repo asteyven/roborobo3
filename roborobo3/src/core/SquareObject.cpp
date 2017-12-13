@@ -8,17 +8,26 @@
 #include "Utilities/Graphics.h"
 #include "Utilities/Misc.h"
 
-SquareObject::SquareObject( int __id ) : PhysicalObject( __id ) // a unique and consistent __id should be given as argument
+SquareObject::SquareObject( int __id, int __group ) : PhysicalObject( __id, __group ) // a unique and consistent __id should be given as argument
 {
 	std::string s = "";
 	std::stringstream out;
-	out << getId();
-    
-    s = "physicalObject[";
-	s += out.str();
-	s += "].solid_w";
-	if ( gProperties.hasProperty( s ) )
-		convertFromString<int>(_solid_w, gProperties.getProperty( s ), std::dec);
+
+	if ( !_isPartOfGroup )
+		{
+			out << getId();
+			s = "physicalObject[";
+		}
+		else
+		{
+			out << getGroup();
+			s = "physicalObjectGroup[";
+		}
+		s += out.str();
+		s += "].";
+
+	if ( gProperties.hasProperty( s + "solid_w" ) )
+		convertFromString<int>(_solid_w, gProperties.getProperty( s + "solid_w" ), std::dec);
 	else
     {
         if ( gVerbose )
@@ -26,11 +35,8 @@ SquareObject::SquareObject( int __id ) : PhysicalObject( __id ) // a unique and 
         gProperties.checkAndGetPropertyValue("gPhysicalObjectDefaultSolid_w", &_solid_w, true);
     }
 
-    s = "physicalObject[";
-	s += out.str();
-	s += "].solid_h";
-	if ( gProperties.hasProperty( s ) )
-		convertFromString<int>(_solid_h, gProperties.getProperty( s ), std::dec);
+	if ( gProperties.hasProperty( s + "solid_h" ) )
+		convertFromString<int>(_solid_h, gProperties.getProperty( s + "solid_h" ), std::dec);
 	else
     {
         if ( gVerbose )
@@ -38,11 +44,8 @@ SquareObject::SquareObject( int __id ) : PhysicalObject( __id ) // a unique and 
         gProperties.checkAndGetPropertyValue("gPhysicalObjectDefaultSolid_h", &_solid_h, true);
     }
     
-    s = "physicalObject[";
-	s += out.str();
-	s += "].soft_w";
-	if ( gProperties.hasProperty( s ) )
-		convertFromString<int>(_soft_w, gProperties.getProperty( s ), std::dec);
+	if ( gProperties.hasProperty( s + "soft_w" ) )
+		convertFromString<int>(_soft_w, gProperties.getProperty( s + "soft_w" ), std::dec);
 	else
     {
         if ( gVerbose )
@@ -50,11 +53,8 @@ SquareObject::SquareObject( int __id ) : PhysicalObject( __id ) // a unique and 
         gProperties.checkAndGetPropertyValue("gPhysicalObjectDefaultSoft_w", &_soft_h, true);
     }
     
-    s = "physicalObject[";
-	s += out.str();
-	s += "].soft_h";
-	if ( gProperties.hasProperty( s ) )
-		convertFromString<int>(_soft_h, gProperties.getProperty( s ), std::dec);
+	if ( gProperties.hasProperty( s + "soft_h" ) )
+		convertFromString<int>(_soft_h, gProperties.getProperty( s + "soft_h" ), std::dec);
 	else
     {
         if ( gVerbose )

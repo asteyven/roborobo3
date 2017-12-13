@@ -24,7 +24,7 @@ protected:
     
 public :
     
-    SquareObject( int __id ); // use PhysicalObjectFactory instead!
+    SquareObject( int __id, int __group ); // use PhysicalObjectFactory instead!
     ~SquareObject() { }
     
     bool canRegister(); // test if register object is possible (use both shape or footprints)

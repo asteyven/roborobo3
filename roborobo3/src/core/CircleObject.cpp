@@ -8,17 +8,26 @@
 #include <Utilities/Graphics.h>
 #include "Utilities/Misc.h"
 
-CircleObject::CircleObject( int __id ) : PhysicalObject( __id ) // a unique and consistent __id should be given as argument
+CircleObject::CircleObject( int __id, int __group ) : PhysicalObject( __id, __group ) // a unique and consistent __id should be given as argument
 {
 	std::string s = "";
 	std::stringstream out;
-	out << getId();
-    
-    s = "physicalObject[";
+
+	if ( !_isPartOfGroup )
+	{
+		out << getId();
+		s = "physicalObject[";
+	}
+	else
+	{
+		out << getGroup();
+		s = "physicalObjectGroup[";
+	}
 	s += out.str();
-	s += "].radius";
-	if ( gProperties.hasProperty( s ) )
-		convertFromString<double>(_radius, gProperties.getProperty( s ), std::dec);
+	s += "].";
+
+	if ( gProperties.hasProperty( s + "radius" ) )
+		convertFromString<double>(_radius, gProperties.getProperty( s + "radius" ), std::dec);
 	else
     {
         if ( gVerbose )
@@ -26,11 +35,8 @@ CircleObject::CircleObject( int __id ) : PhysicalObject( __id ) // a unique and 
         gProperties.checkAndGetPropertyValue("gPhysicalObjectDefaultRadius", &_radius, true);
     }
     
-    s = "physicalObject[";
-	s += out.str();
-	s += "].footprintRadius";
-	if ( gProperties.hasProperty( s ) )
-		convertFromString<double>(_footprintRadius, gProperties.getProperty( s ), std::dec);
+	if ( gProperties.hasProperty( s + "footprintRadius" ) )
+		convertFromString<double>(_footprintRadius, gProperties.getProperty( s + "footprintRadius" ), std::dec);
 	else
     {
         if ( gVerbose )
@@ -76,6 +82,14 @@ CircleObject::CircleObject( int __id ) : PhysicalObject( __id ) // a unique and 
         }
     }
     
+    /*
+    if ( _visible )
+    {
+        registerObject();
+    }
+    registered = true;
+    */
+    /* BP.2017-12-05 !n */
     if ( canRegister() ) // in case location is not possible (may occur if findRandomLocation() failed, and gLocationFinderExitOnFail is false)
     {
         if ( _visible )
@@ -86,9 +100,10 @@ CircleObject::CircleObject( int __id ) : PhysicalObject( __id ) // a unique and 
     }
     else
     {
-        //_visible = false;
+        _visible = false;
         registered = false;
     }
+    /**/
 }
 
 

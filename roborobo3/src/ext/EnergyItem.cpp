@@ -4,19 +4,28 @@
 #include "WorldModels/RobotWorldModel.h"
 #include "Utilities/Misc.h"
 
-EnergyItem::EnergyItem( int __id ) : CircleObject( __id ) // should only be called by PhysicalObjectFactory
+EnergyItem::EnergyItem( int __id, int __group ) : CircleObject( __id, __group ) // should only be called by PhysicalObjectFactory
 {
     setType(1);
 
     std::string s = "";
 	std::stringstream out;
-	out << getId();
-    
-    s = "physicalObject[";
+	if ( !_isPartOfGroup )
+	{
+		out << getId();
+		s = "physicalObject[";
+	}
+	else
+	{
+		out << getGroup();
+		s = "physicalObjectGroup[";
+	}
 	s += out.str();
-	s += "].energy";
-	if ( gProperties.hasProperty( s ) )
-		convertFromString<double>(maxEnergyLevel, gProperties.getProperty( s ), std::dec);
+	s += "].";
+
+
+	if ( gProperties.hasProperty( s + "energy" ) )
+		convertFromString<double>(maxEnergyLevel, gProperties.getProperty( s + "energy" ), std::dec);
 	else
     {
         if ( gVerbose )
@@ -24,11 +33,8 @@ EnergyItem::EnergyItem( int __id ) : CircleObject( __id ) // should only be call
         maxEnergyLevel = gEnergyItemDefaultInit;
     }
     
-    s = "physicalObject[";
-	s += out.str();
-	s += "].energyMode";
-	if ( gProperties.hasProperty( s ) )
-		convertFromString<int>(energyMode, gProperties.getProperty( s ), std::dec);
+	if ( gProperties.hasProperty( s + "energyMode" ) )
+		convertFromString<int>(energyMode, gProperties.getProperty( s + "energyMode" ), std::dec);
 	else
     {
         if ( gVerbose )

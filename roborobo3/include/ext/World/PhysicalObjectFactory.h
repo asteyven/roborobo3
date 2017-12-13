@@ -17,7 +17,7 @@ class PhysicalObjectFactory
         static int _nextId;
     
 	public :
-        static void makeObject( int type = 0 ); // default type is zero. Properties file value always override.
+        static void makeObject( int group = -1, int type = 0 ); // default type is zero. Properties file value always override.
         static int getNextId();
         static int getNbOfTypes();
     

@@ -3,7 +3,7 @@
 #include "Utilities/Misc.h"
 #include "World/World.h"
 
-GateObject::GateObject( int __id ) : SquareObject( __id ) // should only be called by PhysicalObjectFactory
+GateObject::GateObject( int __id, int __group ) : SquareObject( __id, __group ) // should only be called by PhysicalObjectFactory
 {
     setType(2);
 }

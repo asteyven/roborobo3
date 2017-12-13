@@ -7,11 +7,25 @@
 #include "RoboroboMain/roborobo.h"
 #include "Utilities/Misc.h"
 #include "World/World.h"
+#include "World/PhysicalObjectGroup.h"
 
-PhysicalObject::PhysicalObject( int __id ) // a unique and consistent __id should be given as argument
+PhysicalObject::PhysicalObject( int __id, int __group ) // a unique and consistent __id should be given as argument
 {
     _id = __id;
+    _group = __group;
+    if (__group > -1)
+		_isPartOfGroup = true;
+    else
+    	_isPartOfGroup = false;
+
     init();
+
+    gNbOfPhysicalObjects++;
+}
+
+PhysicalObject::~PhysicalObject()
+{
+	gNbOfPhysicalObjects--;
 }
 
 void PhysicalObject::init()
@@ -20,58 +34,55 @@ void PhysicalObject::init()
     
 	std::string s = "";
 	std::stringstream out;
-	out << getId();
     
+	if ( !_isPartOfGroup )
+	{
+		out << getId();
+		s = "physicalObject[";
+	}
+	else
+	{
+		out << getGroup();
+		s = "physicalObjectGroup[";
+	}
+	s += out.str();
+	s += "].";
+
     regrowTime = 0;
     
-    s = "physicalObject[";
-	s += out.str();
-	s += "].regrowTimeMax";
-	if ( gProperties.hasProperty( s ) )
+    if ( gProperties.hasProperty( s + "regrowTimeMax" ) )
 	{
-		convertFromString<int>(regrowTimeMax, gProperties.getProperty( s ), std::dec);
+		convertFromString<int>(regrowTimeMax, gProperties.getProperty( s + "regrowTimeMax" ), std::dec);
 	}
     else
     {
         regrowTimeMax = gPhysicalObjectDefaultRegrowTimeMax;
     }
     
-    s = "physicalObject[";
-	s += out.str();
-	s += "].overwrite";
-	if ( gProperties.hasProperty( s ) )
-        gProperties.checkAndGetPropertyValue(s,&overwrite,true);
+	if ( gProperties.hasProperty( s + "overwrite" ) )
+        gProperties.checkAndGetPropertyValue(s + "overwrite",&overwrite,true);
     else
     {
         overwrite = gPhysicalObjectDefaultOverwrite;
     }
     
-    s = "physicalObject[";
-	s += out.str();
-	s += "].relocate";
-	if ( gProperties.hasProperty( s ) )
-        gProperties.checkAndGetPropertyValue(s,&relocate,true);
+	if ( gProperties.hasProperty( s + "relocate" ) )
+        gProperties.checkAndGetPropertyValue(s + "relocate",&relocate,true);
     else
     {
         relocate = gPhysicalObjectDefaultRelocate;
     }
     
-    s = "physicalObject[";
-	s += out.str();
-	s += "].visible";
-	if ( gProperties.hasProperty( s ) )
-        gProperties.checkAndGetPropertyValue(s,&_visible,true);
+	if ( gProperties.hasProperty( s + "visible" ) )
+        gProperties.checkAndGetPropertyValue(s + "visible",&_visible,true);
 	else
         gProperties.checkAndGetPropertyValue("gPhysicalObjectsVisible", &_visible, true);
     
     Uint32 colorValue;
     
-    s = "physicalObject[";
-	s += out.str();
-	s += "].displayColorRed";
-	if ( gProperties.hasProperty( s ) )
+	if ( gProperties.hasProperty( s + "displayColorRed" ) )
 	{
-		convertFromString<Uint32>(colorValue, gProperties.getProperty( s ), std::dec);
+		convertFromString<Uint32>(colorValue, gProperties.getProperty( s + "displayColorRed" ), std::dec);
         _displayColorRed = (colorValue & 0x000000FF);
 	}
     else
@@ -79,12 +90,9 @@ void PhysicalObject::init()
         _displayColorRed = gPhysicalObjectDefaultDisplayColorRed; // default
     }
     
-    s = "physicalObject[";
-	s += out.str();
-	s += "].displayColorGreen";
-	if ( gProperties.hasProperty( s ) )
+	if ( gProperties.hasProperty( s + "displayColorGreen" ) )
 	{
-		convertFromString<Uint32>(colorValue, gProperties.getProperty( s ), std::dec);
+		convertFromString<Uint32>(colorValue, gProperties.getProperty( s + "displayColorGreen" ), std::dec);
         _displayColorGreen = (colorValue & 0x000000FF);
 	}
     else
@@ -92,12 +100,9 @@ void PhysicalObject::init()
         _displayColorGreen = gPhysicalObjectDefaultDisplayColorGreen; // default
     }
     
-    s = "physicalObject[";
-	s += out.str();
-	s += "].displayColorBlue";
-	if ( gProperties.hasProperty( s ) )
+	if ( gProperties.hasProperty( s + "displayColorBlue" ) )
 	{
-		convertFromString<Uint32>(colorValue, gProperties.getProperty( s ), std::dec);
+		convertFromString<Uint32>(colorValue, gProperties.getProperty( s + "displayColorBlue" ), std::dec);
         _displayColorBlue = (colorValue & 0x000000FF);
 	}
     else
@@ -105,61 +110,105 @@ void PhysicalObject::init()
         _displayColorBlue = gPhysicalObjectDefaultDisplayColorBlue; // default
     }
     
-    s = "physicalObject[";
-	s += out.str();
-	s += "].x";
-	if ( gProperties.hasProperty( s ) )
+	if ( ! _isPartOfGroup )
 	{
-		convertFromString<double>(x, gProperties.getProperty( s ), std::dec);
+		if ( gProperties.hasProperty( s + "x" ) )
+		{
+			convertFromString<double>(x, gProperties.getProperty( s + "x" ), std::dec);
+		}
+		else
+		{
+			x = -1.0;
+		}
+
+		if ( gProperties.hasProperty( s + "y" ) )
+		{
+			convertFromString<double>(y, gProperties.getProperty( s + "y" ), std::dec);
+		}
+		else
+		{
+			y = -1.0;
+		}
 	}
 	else
 	{
-        x = -1.0;
+		x = -1.0, y = -1.0;
 	}
-    
-	s = "physicalObject[";
-	s += out.str();
-	s += "].y";
-	if ( gProperties.hasProperty( s ) )
-	{
-		convertFromString<double>(y, gProperties.getProperty( s ), std::dec);
-	}
-	else
-	{
-        y = -1.0;
-	}
-    
-    setCoordinates( x, y );
+	setCoordinates( x, y );
+
 }
 
 int PhysicalObject::findRandomLocation( )
 {
-    double x = 0.0, y = 0.0;
-    
+    double x = 0.0, y = 0.0, _rndOne = 0.0, _rndTwo = 0.0, __rad = 0.0;
     int tries = 0;
-    
-    do {
-        x = ( randint() % ( gPhysicalObjectsInitAreaWidth  ) ) + gPhysicalObjectsInitAreaX;
-        y = ( randint() % ( gPhysicalObjectsInitAreaHeight ) ) + gPhysicalObjectsInitAreaY;
-        
-        //x = (randint() % (gAreaWidth-20)) + 10;  // deprecated
-        //y = (randint() % (gAreaHeight-20)) + 10; // deprecated
-        
-        setCoordinates( x, y );
-        
-        tries++;
-    } while ( canRegister() == false && tries < gLocationFinderMaxNbOfTrials );
-    
-    if ( tries == gLocationFinderMaxNbOfTrials )
+
+    int __initAreaWidth = gPhysicalObjectsInitAreaWidth,
+		__initAreaHeight = gPhysicalObjectsInitAreaHeight,
+		__initAreaX = gPhysicalObjectsInitAreaX,
+		__initAreaY = gPhysicalObjectsInitAreaY,
+		__initDistribution = gPhysicalObjectsInitDistribution,
+		__initAreaShape = gPhysicalObjectsInitAreaShape;
+
+	if ( _isPartOfGroup ) {
+		PhysicalObjectGroup *__group = gPhysicalObjectGroups[getGroup()];
+		__initAreaWidth = __group->getInitAreaWidth();
+		__initAreaHeight = __group->getInitAreaHeight();
+		__initAreaX = __group->getInitAreaX();
+		__initAreaY = __group->getInitAreaY();
+		__initDistribution = __group->getInitDistribution();
+		__initAreaShape = __group->getInitAreaShape();
+	}
+	do {
+		switch (__initDistribution) {
+		// produce random number between -0.5 and 0.5
+			case 0: // uniform
+				_rndOne = ((double)( randint() % gAreaWidth )) / ((double)gAreaWidth) - 0.5;
+				_rndTwo = ((double)( randint() % gAreaHeight )) / ((double)gAreaHeight) - 0.5;
+				break;
+			case 1: // normal with mean 0 (and we assume that all numbers are within 7sd)
+				_rndOne = randgaussian() / 7.0 ;
+				_rndTwo = randgaussian() / 7.0 ;
+				break;
+			default:
+				std::cerr << "[ERROR] no valid distribution for PhysicalObject (id:" << getId() << " group:" << getGroup() << ") placement" << std::endl;
+				exit(1);
+				break;
+		}
+		switch (__initAreaShape) {
+			case 0: // square
+				x = (int) ( __initAreaX + __initAreaWidth * ( _rndOne + 0.5 ) );
+				y = (int) ( __initAreaY + __initAreaHeight * ( _rndTwo + 0.5 ) );
+				break;
+			case 1: // elliptic
+				__rad = (randint() % 1000) / 1000.0 * 2 * M_PI;
+				x = __initAreaX + abs(_rndOne) * (__initAreaWidth / 1.0) * cos( __rad );
+				y = __initAreaY + abs(_rndTwo) * (__initAreaHeight / 1.0) * sin( __rad );
+				break;
+			default:
+				std::cerr << "[ERROR] no valid shape for PhysicalObject (id:" << getId() << " group:" << getGroup() << ") placement" << std::endl;
+				exit(1);
+				break;
+		}
+
+		//x = (randint() % (gAreaWidth-20)) + 10;  // deprecated
+		//y = (randint() % (gAreaHeight-20)) + 10; // deprecated
+
+		setCoordinates( x, y );
+
+		tries++;
+	} while ( canRegister() == false && (tries < gLocationFinderMaxNbOfTrials || overwrite == false) );
+
+	if ( tries == gLocationFinderMaxNbOfTrials && overwrite == false )
     {
         if ( gLocationFinderExitOnFail == true )
         {
-            std::cerr << "[CRITICAL] Random initialization of initial position for physical object #" << getId() << " after trying " << gLocationFinderMaxNbOfTrials << " random picks (all failed). There may be too few (none?) possible locations (you may try to manually set initial positions). EXITING.\n";
+            std::cerr << "[CRITICAL] Random initialization of initial position for physical object (id:" << getId() << " group:" << getGroup() << ") after trying " << gLocationFinderMaxNbOfTrials << " random picks (all failed). There may be too few (none?) possible locations (you may try to manually set initial positions). EXITING.\n";
             exit(-1);
         }
         else
         {
-            std::cerr << "[WARNING] Random initialization of initial position for physical object #" << getId() << " after trying " << gLocationFinderMaxNbOfTrials << " random picks (all failed). Retry later.\n";
+            std::cerr << "[WARNING] Random initialization of initial position for physical object (id:" << getId() << " group:" << getGroup() << ") after trying " << gLocationFinderMaxNbOfTrials << " random picks (all failed). Retry later.\n";
             regrowTime = 1;
             setCoordinates( -1, -1 );
         }

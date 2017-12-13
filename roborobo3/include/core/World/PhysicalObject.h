@@ -20,6 +20,8 @@ protected :
     int _id;
     
     int type;
+    int _group;
+    bool _isPartOfGroup;
 
     // coordinates (center of object)
     double _xReal;
@@ -42,17 +44,19 @@ protected :
 protected:
     int findRandomLocation( );
     void setType ( int __type ) { type = __type; }
+    void setGroup ( int __group ) { _group = __group; }
     
 public :
     
-    PhysicalObject( int __id ); // use PhysicalObjectFactory instead!
-    ~PhysicalObject() { }
+    PhysicalObject( int __id, int __group ); // use PhysicalObjectFactory instead!
+    virtual ~PhysicalObject();
 
     int getId()
     {
         return _id;
     }
-    
+    int getGroup() { return _group; }
+
     double getXReal() { return _xReal; }
     double getYReal() { return _yReal; }
     
@@ -68,6 +72,19 @@ public :
     virtual void step() = 0;
     void stepPhysicalObject(); // default step method. Suggested: call this method from step().
     
+    void relocateObject()
+    {
+    	// * pick new coordinate
+    	if ( registered == true && isVisible() )
+    	{
+    	    unregisterObject();
+
+    	    findRandomLocation();
+
+    	    registerObject();
+    	}
+    }
+
     virtual bool canRegister() = 0; // test if register object is possible (use both shape or footprints)
     virtual void registerObject() = 0; // register object in the world (write images)
     virtual void unregisterObject() = 0; // unregister object in the world (write blank pixels)

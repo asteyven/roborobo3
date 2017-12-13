@@ -18,7 +18,7 @@ private:
     
 public :
     
-    GateObject( int __id ); // use PhysicalObjectFactory instead!
+    GateObject( int __id, int __group ); // use PhysicalObjectFactory instead!
     ~GateObject() { }
 
     void step();

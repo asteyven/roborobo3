@@ -16,6 +16,7 @@
 #include "Agents/Robot.h"
 #include "World/PhysicalObjectFactory.h"
 #include "World/PhysicalObject.h"
+#include "World/PhysicalObjectGroup.h"
 
 // project-wide Global data
 
@@ -133,6 +134,7 @@ extern int gNbOfLandmarks;
 extern std::vector<LandmarkObject*> gLandmarks; // list of inanimate objects (landmarks).
 
 extern int gNbOfPhysicalObjects;
+extern int gInitNbOfPhysicalObjects;
 extern int gPhysicalObjectDefaultType;
 extern int gPhysicalObjectDefaultRegrowTimeMax;
 extern bool gPhysicalObjectDefaultRelocate;
@@ -148,6 +150,17 @@ extern int gPhysicalObjectDefaultSoft_w;
 extern int gPhysicalObjectDefaultSoft_h;
 
 extern std::vector<PhysicalObject*> gPhysicalObjects; // list of inanimate objects (landmarks).
+
+extern int gNbOfPhysicalObjectGroups;
+extern int gPhysicalObjectDefaultInitAreaX;
+extern int gPhysicalObjectDefaultInitAreaY;
+extern int gPhysicalObjectDefaultInitAreaWidth;
+extern int gPhysicalObjectDefaultInitAreaHeight;
+extern int gPhysicalObjectDefaultInitAreaShape;
+extern int gPhysicalObjectDefaultInitDistribution;
+
+extern std::vector<PhysicalObjectGroup*> gPhysicalObjectGroups;
+
 extern bool gPhysicalObjectsRedraw;
 
 extern bool gEnergyLevel; // energy level exists? yes/no
@@ -183,6 +196,10 @@ extern int gInspectorAgentYStart;
 // max nb of trials when looking for a location for a physical object or a robot
 extern int gLocationFinderMaxNbOfTrials;
 extern bool gLocationFinderExitOnFail;
+
+// shape and distribution used for object location
+extern int gPhysicalObjectsInitAreaShape; // 0: square (starting from initAreaX and initAreaY), 1: ellipse (centred around initAreaX and initAreaY)
+extern int gPhysicalObjectsInitDistribution; // 0: uniform, 1: gaussian
 
 // area where objects can be randomly located (ie. not a constraint over explicit location)
 extern int gPhysicalObjectsInitAreaX;

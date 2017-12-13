@@ -17,7 +17,7 @@ private:
     
 public :
     
-    RoundObject( int __id ); // use PhysicalObjectFactory instead!
+    RoundObject( int __id, int __group ); // use PhysicalObjectFactory instead!
     ~RoundObject() { }
     
     void step();

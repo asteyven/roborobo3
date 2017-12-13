@@ -33,7 +33,7 @@ private:
     
 public :
     
-    MovableObject( int __id ); // use PhysicalObjectFactory instead!
+    MovableObject( int __id, int __group ); // use PhysicalObjectFactory instead!
     ~MovableObject() { }
     
     bool canRegister();

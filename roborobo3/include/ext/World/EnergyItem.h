@@ -20,7 +20,7 @@ private:
 
 public :
     
-    EnergyItem( int __id ); // use PhysicalObjectFactory instead!
+    EnergyItem( int __id, int __group ); // use PhysicalObjectFactory instead!
     ~EnergyItem() { }
 
     void step();

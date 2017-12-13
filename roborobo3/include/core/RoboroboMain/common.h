@@ -47,7 +47,6 @@
 #include <random> 
 #include <chrono>
 
-
 // boost header
 
 #include <boost/multi_array.hpp>

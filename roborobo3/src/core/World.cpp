@@ -12,6 +12,7 @@
 #include "Utilities/Graphics.h"
 #include "RoboroboMain/roborobo.h"
 #include "Observers/WorldObserver.h"
+#include "World/PhysicalObjectGroup.h"
 #include <iostream>
 #include <vector>
 
@@ -85,13 +86,21 @@ void World::initWorld()
     // * set or test are for initial position of agents and objects
     
     if ( gPhysicalObjectsInitAreaWidth == -1 )
+    {
         gPhysicalObjectsInitAreaWidth = gAreaWidth - 20;
+    }
     if ( gPhysicalObjectsInitAreaHeight == -1 )
+    {
         gPhysicalObjectsInitAreaHeight = gAreaHeight - 20;
+    }
     if ( gAgentsInitAreaWidth == -1 )
+    {
         gAgentsInitAreaWidth = gAreaWidth;
+    }
     if ( gAgentsInitAreaHeight == -1 )
+    {
         gAgentsInitAreaHeight = gAreaHeight;
+    }
     
     if (
         gPhysicalObjectsInitAreaX < 0 || gPhysicalObjectsInitAreaX > gAreaWidth ||
@@ -108,7 +117,8 @@ void World::initWorld()
         exit(-1);
     }
     
-    
+
+
     // *** create robot mask from image
     
     // * Analyse agent mask and make it into a list of coordinates
@@ -150,11 +160,18 @@ void World::initWorld()
         gLandmarks.push_back(new LandmarkObject());
     }
     
-    for ( int i = 0 ; i != gNbOfPhysicalObjects ; i++)
+    for ( int i = 0 ; i != gInitNbOfPhysicalObjects ; i++)
     {
         PhysicalObjectFactory::makeObject();
     }
     
+	for ( int i = 0 ; i < gNbOfPhysicalObjectGroups ; i ++ )
+	{
+		PhysicalObjectGroup *group = new PhysicalObjectGroup(i);
+		gPhysicalObjectGroups.push_back(group);
+		group->initObjects();
+	}
+
 	for ( int i = 0 ; i != gInitialNumberOfRobots ; i++ )
 	{
 		Robot *robot = new Robot(this);

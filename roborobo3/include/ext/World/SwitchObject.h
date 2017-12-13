@@ -19,7 +19,7 @@ private:
     
 public :
     
-    SwitchObject( int __id ); // use PhysicalObjectFactory instead!
+    SwitchObject( int __id, int __group ); // use PhysicalObjectFactory instead!
     ~SwitchObject() { }
 
     void step();

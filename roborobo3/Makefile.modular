@@ -14,6 +14,8 @@ LDFLAGS      = `sdl2-config --cflags --libs`
 LIBS      = 
 RM           = rm -f 
 MAKE         = make 
+BUILD_PATH_DIR = "build"
+BUILD_PATH 	 = ${shell if [ -d $(BUILD_PATH_DIR) ]; then echo "$(BUILD_PATH_DIR)/"; fi;}
 INCLUDE      = -Iinclude/ext -Iinclude/contrib -Iinclude/core -Iprj/
 SRC_C	     = $(wildcard src/core/*.c src/contrib/*.c src/contrib/**/*.c src/ext/*.c)
 SRC_CC	     = $(wildcard src/core/*.cpp src/contrib/*.cpp src/contrib/**/*.cpp src/ext/*.cpp)
@@ -38,7 +40,14 @@ CCFLAGS += $(MOD_VARS)
 SRC_C += $(foreach m, $(MODULES), $(wildcard prj/$(m)/src/*.c) $(wildcard prj/$(m)/src/**/*.c))
 SRC_CC += $(foreach m, $(MODULES), $(wildcard prj/$(m)/src/*.cpp) $(wildcard prj/$(m)/src/**/*.cpp))
 
-OBJ          = $(SRC_C:.c=.o) $(SRC_CC:.cpp=.o)
+OBJ_o          = $(SRC_C:.c=.o) $(SRC_CC:.cpp=.o)
+# if BUILD_PATH is enabled, add <BUILD_PATH> to object files
+ifneq ($(strip $(BUILD_PATH)),)
+	OBJ		+= $(foreach o, $(OBJ_o), $(BUILD_PATH)$(o)) 
+else
+	OBJ		= $(OBJ_o)
+endif
+
 TARGET       := roborobo
 
 .PHONY: snapshot
@@ -48,6 +57,8 @@ TARGET       := roborobo
 all: verifyMods $(TARGET)
 
 verifyMods:
+	@echo "Building in: ."$(BUILD_PATH_DIR)"/"
+	@if [ -d $(BUILD_PATH_DIR) ]; then find -L src/ prj/ -type d -exec mkdir -p "$(BUILD_PATH){}" \; ; fi;
 	@for i in $(MODULES); do \
 		if [ ! -d prj/$$i ]; then \
 			echo "WARNING : Project $$i does not exist !"; \
@@ -64,7 +75,7 @@ else
 	$(CC) $(LDFLAGS) -o $@ $^ -lSDL2 -lSDL2_image $(LIBS)
 endif
 
-%.o: %.cpp
+$(BUILD_PATH)%.o: %.cpp
 ifeq ($(strip $(VERBOSE)),)
 	@echo "[CPP]	" $<
 	@$(CC) -o $@ -c $< $(CCFLAGS) $(INCLUDE)
@@ -72,7 +83,7 @@ else
 	$(CC) -o $@ -c $< $(CCFLAGS) $(INCLUDE)
 endif
 
-%.o: %.c
+$(BUILD_PATH)%.o: %.c
 ifeq ($(strip $(VERBOSE)),)
 	@echo "[C]	" $<
 	@$(CC) -o $@ -c $< $(CCFLAGS) $(INCLUDE)

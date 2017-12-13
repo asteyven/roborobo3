@@ -21,7 +21,7 @@ protected:
     
 public :
     
-    CircleObject( int __id ); // use PhysicalObjectFactory instead!
+    CircleObject( int __id, int __group ); // use PhysicalObjectFactory instead!
     ~CircleObject() { }
 
     bool canRegister(); // test if register object is possible (use both shape or footprints)

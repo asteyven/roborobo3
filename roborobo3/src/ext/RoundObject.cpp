@@ -1,7 +1,7 @@
 #include "World/RoundObject.h"
 
 
-RoundObject::RoundObject( int __id ) : CircleObject( __id ) // should only be called by PhysicalObjectFactory
+RoundObject::RoundObject( int __id, int __group ) : CircleObject( __id, __group ) // should only be called by PhysicalObjectFactory
 {
     setType(0);
 }
